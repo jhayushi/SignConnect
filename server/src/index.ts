@@ -1,15 +1,21 @@
 import { createApp } from "./app.js";
-import { SEED_SIGNS } from "./data/signs.js";
-import { InMemorySignRepository, InMemoryTranscriptRepository } from "./repositories/inMemory.js";
+import { databasePath, openDatabase } from "./db/sqlite.js";
+import { SqliteSignRepository, SqliteTranscriptRepository } from "./repositories/sqlite.js";
 
 const PORT = Number(process.env.PORT ?? 3001);
+const dbPath = databasePath();
+const db = openDatabase(dbPath);
 
-// Swap these for PostgreSQL-backed repositories when a database is added.
 const app = createApp({
-  signs: new InMemorySignRepository(SEED_SIGNS),
-  transcripts: new InMemoryTranscriptRepository(),
+  signs: new SqliteSignRepository(db),
+  transcripts: new SqliteTranscriptRepository(db),
 });
 
 app.listen(PORT, () => {
   console.log(`SignConnect API listening on http://localhost:${PORT}`);
+  console.log(`SQLite database: ${dbPath}`);
+});
+
+process.on("exit", () => {
+  if (db.open) db.close();
 });
