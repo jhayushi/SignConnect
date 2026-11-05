@@ -62,6 +62,15 @@ export function step(
   return { words, candidate, candidateSince, locked, lockedLastSeen };
 }
 
+/** Split a spoken or typed phrase into words for the shared conversation. */
+export function wordsFromSpeech(text: string): string[] {
+  return text
+    .toUpperCase()
+    .split(/[^A-Z0-9']+/)
+    .map((word) => word.replace(/^'+|'+$/g, ""))
+    .filter((word) => word.length > 0);
+}
+
 /** 0..1 progress toward committing the current candidate (for the UI). */
 export function holdProgress(state: BuilderState, now: number, config: BuilderConfig = DEFAULT_CONFIG): number {
   if (!state.candidate || state.candidate === state.locked) return 0;

@@ -6,16 +6,20 @@ export interface Point {
 }
 
 export interface RecognitionResult {
-  /** Recognizer-specific label (e.g. "Open_Palm"), or null when nothing is recognized. */
+  /** Recognizer-specific label (e.g. "Open_Palm" or "Please"), or null when nothing is recognized. */
   label: string | null;
   confidence: number;
   /** Normalized hand landmarks (one array of 21 points per hand), used for drawing. */
   landmarks: Point[][];
+  /** Metric landmarks, one array per hand, when the model provides them. */
+  worldLandmarks?: Point[][];
+  /** Which physical hand each landmark array belongs to, when known. */
+  handedness?: ("Left" | "Right" | "Unknown")[];
 }
 
 /**
  * Anything that can turn a video frame into a sign label.
- * MediaPipe today; a vision-API recognizer can implement this later.
+ * The default recognizer uses MediaPipe gestures plus hand landmarks.
  */
 export interface SignRecognizer {
   init(): Promise<void>;
