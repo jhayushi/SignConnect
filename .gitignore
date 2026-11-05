@@ -3,3 +3,6 @@ dist/
 .env
 .DS_Store
 *.log
+
+# Local SQLite database (created on server start)
+server/data/

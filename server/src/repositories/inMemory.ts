@@ -1,3 +1,5 @@
+// Kept so the interfaces can be exercised without a database file.
+// The running server uses the SQLite repositories instead.
 import { randomUUID } from "node:crypto";
 import type { Sign, SignRepository, Transcript, TranscriptRepository } from "./types.js";
 
