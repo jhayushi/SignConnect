@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { INITIAL_STATE, holdProgress, step, type BuilderState } from "../sentence/sentenceBuilder";
+import { INITIAL_STATE, holdProgress, step, wordsFromSpeech, type BuilderState } from "../sentence/sentenceBuilder";
 
 export function useSentenceBuilder() {
   const stateRef = useRef<BuilderState>(INITIAL_STATE);
@@ -25,5 +25,15 @@ export function useSentenceBuilder() {
     setWords([]);
   }, []);
 
-  return { words, progress, push, undo, clear };
+  // Speech and typing skip the hold timer: the speaker already finished the phrase.
+  const addText = useCallback((text: string) => {
+    const incoming = wordsFromSpeech(text);
+    if (incoming.length === 0) return false;
+    const nextWords = [...stateRef.current.words, ...incoming];
+    stateRef.current = { ...stateRef.current, words: nextWords };
+    setWords(nextWords);
+    return true;
+  }, []);
+
+  return { words, progress, push, undo, clear, addText };
 }

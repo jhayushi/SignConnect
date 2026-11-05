@@ -3,6 +3,7 @@ export interface Sign {
   gesture: string;
   word: string;
   description: string;
+  source: "mediapipe" | "landmarks";
 }
 
 export interface Transcript {

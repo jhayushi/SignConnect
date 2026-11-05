@@ -3,11 +3,13 @@
 
 export interface Sign {
   id: string;
-  /** Label emitted by the recognizer (e.g. MediaPipe's "Open_Palm"). */
+  /** Label emitted by the recognizer (e.g. MediaPipe's "Open_Palm", or "Please"). */
   gesture: string;
   /** Word added to the sentence when this sign is recognized. */
   word: string;
   description: string;
+  /** "mediapipe" for a canned gesture, "landmarks" for a hand-shape sign. */
+  source: "mediapipe" | "landmarks";
 }
 
 export interface Transcript {
