@@ -5,7 +5,7 @@ import { createRecognizer, type RecognitionResult, type SignRecognizer } from ".
 type Status = "idle" | "loading" | "running" | "error";
 
 interface Props {
-  onResult: (result: RecognitionResult) => void;
+  onResult: (result: RecognitionResult, running: boolean) => void;
 }
 
 export function CameraView({ onResult }: Props) {
@@ -27,7 +27,7 @@ export function CameraView({ onResult }: Props) {
     streamRef.current = null;
     if (videoRef.current) videoRef.current.srcObject = null;
     canvasRef.current?.getContext("2d")?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-    onResultRef.current({ label: null, confidence: 0, landmarks: [] });
+    onResultRef.current({ label: null, confidence: 0, landmarks: [] }, false);
     setStatus("idle");
   }, []);
 
@@ -50,11 +50,11 @@ export function CameraView({ onResult }: Props) {
         canvas.height = video.videoHeight;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         for (const hand of result.landmarks) {
-          drawing.drawConnectors(hand, GestureRecognizer.HAND_CONNECTIONS, { color: "#22c55e", lineWidth: 4 });
-          drawing.drawLandmarks(hand, { color: "#f97316", radius: 3 });
+          drawing.drawConnectors(hand, GestureRecognizer.HAND_CONNECTIONS, { color: "rgba(255,255,255,0.9)", lineWidth: 3 });
+          drawing.drawLandmarks(hand, { color: "#2bb3a6", fillColor: "#2bb3a6", radius: 3 });
         }
 
-        onResultRef.current(result);
+        onResultRef.current(result, true);
       }
       frameRef.current = requestAnimationFrame(tick);
     };
@@ -70,7 +70,10 @@ export function CameraView({ onResult }: Props) {
         await recognizer.init();
         recognizerRef.current = recognizer;
       }
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 }, audio: false });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+        audio: false,
+      });
       streamRef.current = stream;
       const video = videoRef.current!;
       video.srcObject = stream;
@@ -80,8 +83,8 @@ export function CameraView({ onResult }: Props) {
     } catch (err) {
       console.error(err);
       setError(err instanceof DOMException && err.name === "NotAllowedError"
-        ? "Camera permission was denied."
-        : "Could not start the camera or load the recognition model.");
+        ? "Camera access was blocked. Allow it in your browser's address bar, then try again."
+        : "The camera or the recognition model didn't load. Check your connection and try again.");
       stop();
       setStatus("error");
     }
@@ -97,26 +100,40 @@ export function CameraView({ onResult }: Props) {
   );
 
   return (
-    <div className="camera">
+    <div className={`camera camera-${status}`}>
       <div className="camera-frame">
+        {/* Mirrored like a mirror, so moving your right hand moves the right side of the picture. */}
         <video ref={videoRef} playsInline muted />
         <canvas ref={canvasRef} />
+        {status === "running" && <span className="live-pill">Live</span>}
         {status !== "running" && (
           <div className="camera-placeholder">
-            {status === "loading" ? "Loading model and camera…" : "Camera is off"}
+            {status === "loading" ? (
+              <>
+                <span className="spinner" aria-hidden="true" />
+                <p>Getting the camera ready…</p>
+                <p className="small">The first start takes a few seconds while the hand model downloads.</p>
+              </>
+            ) : (
+              <>
+                <p className="placeholder-title">Your camera is off</p>
+                <p className="small">Sit about an arm's length away with good light on your hands.</p>
+                <button className="btn btn-dark" onClick={start}>
+                  Start camera <span aria-hidden="true">↗</span>
+                </button>
+                {error && <p className="error">{error}</p>}
+              </>
+            )}
           </div>
         )}
       </div>
-      <div className="camera-controls">
-        {status === "running" ? (
-          <button onClick={stop}>Stop Camera</button>
-        ) : (
-          <button className="primary" onClick={start} disabled={status === "loading"}>
-            {status === "loading" ? "Starting…" : "Start Camera"}
+      {status === "running" && (
+        <div className="camera-controls">
+          <button className="btn btn-ghost" onClick={stop}>
+            Stop camera
           </button>
-        )}
-        {error && <span className="error">{error}</span>}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
