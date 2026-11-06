@@ -9,6 +9,7 @@ import { SpeechPanel } from "./components/SpeechPanel";
 import { useSentenceBuilder } from "./hooks/useSentenceBuilder";
 import { useSigns } from "./hooks/useSigns";
 import type { RecognitionResult } from "./recognition";
+import { speakText } from "./speech/speak";
 
 export default function App() {
   const { signs, error: signsError } = useSigns();
@@ -32,7 +33,8 @@ export default function App() {
     (result: RecognitionResult) => {
       const word = result.label ? wordByGesture.get(result.label) ?? null : null;
       setDetection({ word, confidence: result.confidence });
-      push(word, result.confidence);
+      const added = push(word, result.confidence);
+      if (added) speakText(added);
     },
     [wordByGesture, push],
   );
@@ -51,6 +53,10 @@ export default function App() {
     } catch {
       flash("Could not copy");
     }
+  };
+
+  const handleSpeak = () => {
+    if (!speakText(text)) flash("Speech output isn't available in this browser.");
   };
 
   const handleSave = async () => {
@@ -112,6 +118,7 @@ export default function App() {
             onUndo={sentence.undo}
             onClear={sentence.clear}
             onCopy={handleCopy}
+            onSpeak={handleSpeak}
             onSave={handleSave}
           />
         )}
