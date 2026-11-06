@@ -14,7 +14,7 @@ npm run dev
 - Client: http://localhost:5173
 - API: http://localhost:3001
 
-Open the client and click **Start Camera**. Hold a supported sign for about 1 second to add it. Click **Start Mic** to speak into the same conversation. If the browser has no speech recognition, or the microphone is blocked, type the words instead. **Save** stores the combined text. Saved conversations stay in the database after the server restarts.
+Open the client and click **Start Camera**. Hold a supported sign for about 1 second to add it. Click **Start Mic** to speak into the same conversation. If the browser has no speech recognition, or the microphone is blocked, type the words instead. **Speak** reads the conversation aloud. A recognized sign is also spoken as it is added. **Save** stores the combined text. Saved conversations stay in the database after the server restarts.
 
 The screen has three sections: **Talk** (camera, microphone, and the live conversation), **Practice** (every sign from the API), and **History** (open or delete a saved conversation).
 
@@ -114,7 +114,7 @@ The browser reads the webcam with MediaPipe, classifies extra signs from hand la
 
 ## Testing
 
-`npm test` runs the landmark checks, the SQLite round-trip, and the API route checks. `npm run typecheck` and `npm run build` should pass as well. Manual steps are in [docs/TESTING.md](docs/TESTING.md). How this maps to a frontend, backend, database, and the extra areas is in [docs/CAPSTONE.md](docs/CAPSTONE.md).
+`npm test` runs the landmark checks, the SQLite round-trip, and the API route checks. `npm run typecheck` and `npm run build` should pass as well. Manual steps are in [docs/TESTING.md](docs/TESTING.md). How this maps to a frontend, backend, database, and the four extras is in [docs/CAPSTONE.md](docs/CAPSTONE.md). Short answers for each extra are in [docs/TECHNICAL_QA.md](docs/TECHNICAL_QA.md).
 
 ## Structure
 

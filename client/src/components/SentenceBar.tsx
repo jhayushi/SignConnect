@@ -3,10 +3,11 @@ interface Props {
   onUndo: () => void;
   onClear: () => void;
   onCopy: () => void;
+  onSpeak: () => void;
   onSave: () => void;
 }
 
-export function SentenceBar({ words, onUndo, onClear, onCopy, onSave }: Props) {
+export function SentenceBar({ words, onUndo, onClear, onCopy, onSpeak, onSave }: Props) {
   const empty = words.length === 0;
   return (
     <div className="panel sentence">
@@ -22,6 +23,7 @@ export function SentenceBar({ words, onUndo, onClear, onCopy, onSave }: Props) {
         <button onClick={onUndo} disabled={empty}>Undo</button>
         <button onClick={onClear} disabled={empty}>Clear</button>
         <button onClick={onCopy} disabled={empty}>Copy</button>
+        <button onClick={onSpeak} disabled={empty}>Speak</button>
         <button className="primary" onClick={onSave} disabled={empty}>Save</button>
       </div>
     </div>

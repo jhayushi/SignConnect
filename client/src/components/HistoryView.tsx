@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, type Transcript } from "../api/client";
+import { speakText } from "../speech/speak";
 
 interface Props {
   transcripts: Transcript[];
@@ -73,9 +74,10 @@ export function HistoryView({ transcripts, onDelete }: Props) {
           <>
             <p className="history-text">{viewed.text}</p>
             <p className="muted">{new Date(viewed.createdAt).toLocaleString()}</p>
-            <button type="button" onClick={() => onDelete(viewed.id)}>
-              Delete
-            </button>
+            <div className="sentence-actions">
+              <button type="button" onClick={() => speakText(viewed.text)}>Speak</button>
+              <button type="button" onClick={() => onDelete(viewed.id)}>Delete</button>
+            </div>
           </>
         )}
       </div>
