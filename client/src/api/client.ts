@@ -24,6 +24,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const api = {
   listSigns: () => request<Sign[]>("/signs"),
   listTranscripts: () => request<Transcript[]>("/transcripts"),
+  getTranscript: (id: string) => request<Transcript>(`/transcripts/${id}`),
   createTranscript: (text: string) =>
     request<Transcript>("/transcripts", { method: "POST", body: JSON.stringify({ text }) }),
   deleteTranscript: (id: string) => request<void>(`/transcripts/${id}`, { method: "DELETE" }),

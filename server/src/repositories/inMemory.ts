@@ -19,6 +19,10 @@ export class InMemoryTranscriptRepository implements TranscriptRepository {
     return [...this.transcripts].reverse();
   }
 
+  async get(id: string): Promise<Transcript | null> {
+    return this.transcripts.find((transcript) => transcript.id === id) ?? null;
+  }
+
   async create(text: string): Promise<Transcript> {
     const transcript: Transcript = { id: randomUUID(), text, createdAt: new Date().toISOString() };
     this.transcripts.push(transcript);

@@ -7,7 +7,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
-    "test": "tsx src/db/sqlite.test.ts"
+    "test": "tsx src/db/sqlite.test.ts && tsx src/routes/api.test.ts"
   },
   "dependencies": {
     "better-sqlite3": "^13.0.3",
