@@ -18,15 +18,21 @@ function category(sign: Sign): Exclude<Filter, "all"> {
 const FILTERS: { id: Filter; label: string }[] = [
   { id: "all", label: "All" },
   { id: "word", label: "Words" },
+  { id: "gesture", label: "Easy gestures" },
   { id: "letter", label: "Letters" },
   { id: "number", label: "Numbers" },
-  { id: "gesture", label: "Gestures" },
 ];
 
 export function PracticeView({ signs, activeWord }: Props) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const needle = query.trim().toLowerCase();
+
+  const counts = useMemo(() => {
+    const c: Record<Filter, number> = { all: signs.length, gesture: 0, word: 0, letter: 0, number: 0 };
+    for (const sign of signs) c[category(sign)] += 1;
+    return c;
+  }, [signs]);
 
   const visible = useMemo(
     () =>
@@ -38,56 +44,47 @@ export function PracticeView({ signs, activeWord }: Props) {
     [signs, filter, needle],
   );
 
-  const active = signs.find((sign) => sign.word === activeWord) ?? null;
-
   return (
-    <div className="panel practice">
-      <h2>Practice</h2>
-      <p className="muted sign-hint">
-        {signs.length} signs from the server. Hold one for about a second. The card lights up when the camera sees it.
-      </p>
-      <div className="practice-now" aria-live="polite">
-        {active ? (
-          <>
-            <strong>{active.word}</strong>
-            <span className="muted">{active.description}</span>
-          </>
-        ) : (
-          <span className="muted">No sign in frame yet.</span>
-        )}
-      </div>
-      <div className="practice-tools">
+    <section className="practice">
+      <div className="tabs-row">
+        <div className="tabs" role="tablist" aria-label="Sign groups">
+          {FILTERS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              role="tab"
+              aria-selected={filter === item.id}
+              className="tab"
+              onClick={() => setFilter(item.id)}
+            >
+              {item.label} <span className="muted">{counts[item.id]}</span>
+            </button>
+          ))}
+        </div>
         <input
+          className="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search signs"
           aria-label="Search signs"
         />
-        <div className="practice-filters" role="group" aria-label="Sign groups">
-          {FILTERS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              aria-pressed={filter === item.id}
-              onClick={() => setFilter(item.id)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
       </div>
+
       {visible.length === 0 ? (
-        <p className="muted">No signs match that search.</p>
+        <p className="empty">No signs match “{query}”.</p>
       ) : (
-        <ul className="practice-grid">
+        <ul className="sign-grid">
           {visible.map((sign) => (
-            <li key={sign.id} className={sign.word === activeWord ? "active" : ""}>
-              <strong>{sign.word}</strong>
-              <span className="muted">{sign.description}</span>
+            <li key={sign.id} className={sign.word === activeWord ? "sign-card is-active" : "sign-card"}>
+              <div className="sign-tile">
+                <span className="sign-word">{sign.word}</span>
+                {sign.word === activeWord && <span className="seen">✓ Seen</span>}
+              </div>
+              <p className="sign-desc">{sign.description}</p>
             </li>
           ))}
         </ul>
       )}
-    </div>
+    </section>
   );
 }

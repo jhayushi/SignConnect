@@ -19,6 +19,7 @@ make build
 | `server/src/db/sqlite.test.ts` | Signs are seeded in order. A transcript is still there after the file is closed and opened again. Delete survives that reopen. |
 | `server/src/routes/api.test.ts` | `GET /api/health`, `GET /api/signs` (at least 40 signs, including HELLO, A, and WHERE), create, list, view, and delete transcripts, and reject empty or oversized text. Uses a real SQLite database in memory. |
 | `client/src/recognition/landmarkSigns.test.ts` | Each landmark sign matches a posed hand. Open palm, thumbs up, closed fist, pointing up, victory, and I-love-you stay unlabeled so the MediaPipe words are not replaced. Motion paths cover PLEASE, THANK YOU, SORRY, EAT, DRINK, WHERE, WATER, J, and Z. |
+| `client/src/sentence/sentenceBuilder.test.ts` | A held sign is added once, a short flicker does not restart the hold, a real pause does, low-confidence frames are ignored, and the framing tips (no hand, too far, too close, off the edge) are right. |
 
 The client check builds hands from 21 landmarks, so it does not need a webcam. The API check listens on an ephemeral port and calls the routes with `fetch`.
 

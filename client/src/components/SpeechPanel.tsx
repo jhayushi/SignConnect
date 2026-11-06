@@ -15,46 +15,46 @@ export function SpeechPanel({ onPhrase }: Props) {
   };
 
   return (
-    <div className="speech">
-      <p className="speech-lead">Speak to add words to the same conversation.</p>
-      <div className="speech-heard" aria-live="polite">
-        {speech.listening && speech.interim ? (
-          <span className="interim">{speech.interim}</span>
-        ) : speech.listening ? (
-          <span className="muted">Listening…</span>
-        ) : speech.supported ? (
-          <span className="muted">Mic is off</span>
-        ) : (
-          <span className="muted">Microphone unavailable</span>
+    <div className="card speech">
+      <p className="eyebrow">The other person</p>
+      <div className="speech-row">
+        {speech.supported && (
+          <button
+            type="button"
+            className={`mic ${speech.listening ? "mic-on" : ""}`}
+            onClick={speech.listening ? speech.stop : speech.start}
+            aria-pressed={speech.listening}
+            aria-label={speech.listening ? "Stop listening" : "Start listening"}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor" />
+              <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
+            </svg>
+          </button>
         )}
-      </div>
-
-      {speech.supported ? (
-        <div className="speech-controls">
-          {speech.listening ? (
-            <button type="button" onClick={speech.stop} aria-pressed="true">
-              Stop Mic
-            </button>
+        <div className="speech-heard" aria-live="polite">
+          {speech.listening && speech.interim ? (
+            <span className="interim">“{speech.interim}”</span>
+          ) : speech.listening ? (
+            <span>Listening… speak now</span>
+          ) : speech.supported ? (
+            <span className="muted">Tap the mic to speak</span>
           ) : (
-            <button type="button" className="primary" onClick={speech.start} aria-pressed="false">
-              Start Mic
-            </button>
+            <span className="muted">Voice input isn't supported in this browser. Type instead.</span>
           )}
         </div>
-      ) : (
-        <p className="error">Speech recognition isn't available in this browser. Type below instead.</p>
-      )}
+      </div>
       {speech.error && <p className="error">{speech.error}</p>}
 
       <form className="speech-type" onSubmit={addDraft}>
         <input
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
-          placeholder="Or type a word or phrase"
+          placeholder="…or type a reply"
           aria-label="Type a word or phrase"
           maxLength={200}
         />
-        <button type="submit" disabled={!draft.trim()}>
+        <button type="submit" className="btn btn-dark" disabled={!draft.trim()}>
           Add
         </button>
       </form>
