@@ -24,6 +24,7 @@ export interface SignRepository {
 
 export interface TranscriptRepository {
   list(): Promise<Transcript[]>;
+  get(id: string): Promise<Transcript | null>;
   create(text: string): Promise<Transcript>;
   delete(id: string): Promise<boolean>;
 }
