@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useSpeechInput } from "../hooks/useSpeechInput";
+import { Icon } from "./Icon";
 
 interface Props {
   onPhrase: (text: string) => boolean;
@@ -16,7 +17,7 @@ export function SpeechPanel({ onPhrase }: Props) {
 
   return (
     <div className="speech">
-      <p className="speech-lead">Speak to add words to the same conversation.</p>
+      <p className="speech-lead">Use the mic, or type, to add words to this same conversation.</p>
       <div className="speech-heard" aria-live="polite">
         {speech.listening && speech.interim ? (
           <span className="interim">{speech.interim}</span>
@@ -25,7 +26,7 @@ export function SpeechPanel({ onPhrase }: Props) {
         ) : speech.supported ? (
           <span className="muted">Mic is off</span>
         ) : (
-          <span className="muted">Microphone unavailable</span>
+          <span className="muted">This browser cannot hear speech. Type instead.</span>
         )}
       </div>
 
@@ -33,16 +34,16 @@ export function SpeechPanel({ onPhrase }: Props) {
         <div className="speech-controls">
           {speech.listening ? (
             <button type="button" onClick={speech.stop} aria-pressed="true">
-              Stop Mic
+              <Icon name="mic" />Stop mic
             </button>
           ) : (
-            <button type="button" className="primary" onClick={speech.start} aria-pressed="false">
-              Start Mic
+            <button type="button" onClick={speech.start} aria-pressed="false">
+              <Icon name="mic" />Start mic
             </button>
           )}
         </div>
       ) : (
-        <p className="error">Speech recognition isn't available in this browser. Type below instead.</p>
+        <p className="error">Speech recognition is not available in this browser. Type a phrase below and press Add.</p>
       )}
       {speech.error && <p className="error">{speech.error}</p>}
 

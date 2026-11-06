@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { DrawingUtils, GestureRecognizer } from "@mediapipe/tasks-vision";
 import { createRecognizer, type RecognitionResult, type SignRecognizer } from "../recognition";
+import { Icon } from "./Icon";
 
 type Status = "idle" | "loading" | "running" | "error";
 
 interface Props {
   onResult: (result: RecognitionResult) => void;
+  onStatus?: (status: Status) => void;
 }
 
-export function CameraView({ onResult }: Props) {
+export function CameraView({ onResult, onStatus }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const recognizerRef = useRef<SignRecognizer | null>(null);
@@ -19,6 +21,13 @@ export function CameraView({ onResult }: Props) {
 
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
+  const onStatusRef = useRef(onStatus);
+  onStatusRef.current = onStatus;
+
+  const updateStatus = (next: Status) => {
+    setStatus(next);
+    onStatusRef.current?.(next);
+  };
 
   const stop = useCallback(() => {
     if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
@@ -28,7 +37,7 @@ export function CameraView({ onResult }: Props) {
     if (videoRef.current) videoRef.current.srcObject = null;
     canvasRef.current?.getContext("2d")?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     onResultRef.current({ label: null, confidence: 0, landmarks: [] });
-    setStatus("idle");
+    updateStatus("idle");
   }, []);
 
   const loop = useCallback(() => {
@@ -50,8 +59,8 @@ export function CameraView({ onResult }: Props) {
         canvas.height = video.videoHeight;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         for (const hand of result.landmarks) {
-          drawing.drawConnectors(hand, GestureRecognizer.HAND_CONNECTIONS, { color: "#22c55e", lineWidth: 4 });
-          drawing.drawLandmarks(hand, { color: "#f97316", radius: 3 });
+          drawing.drawConnectors(hand, GestureRecognizer.HAND_CONNECTIONS, { color: "#f3e6d0", lineWidth: 4 });
+          drawing.drawLandmarks(hand, { color: "#c45c26", radius: 3 });
         }
 
         onResultRef.current(result);
@@ -62,7 +71,7 @@ export function CameraView({ onResult }: Props) {
   }, []);
 
   const start = useCallback(async () => {
-    setStatus("loading");
+    updateStatus("loading");
     setError(null);
     try {
       if (!recognizerRef.current) {
@@ -75,15 +84,18 @@ export function CameraView({ onResult }: Props) {
       const video = videoRef.current!;
       video.srcObject = stream;
       await video.play();
-      setStatus("running");
+      updateStatus("running");
       loop();
     } catch (err) {
       console.error(err);
-      setError(err instanceof DOMException && err.name === "NotAllowedError"
-        ? "Camera permission was denied."
-        : "Could not start the camera or load the recognition model.");
+      const denied = err instanceof DOMException && err.name === "NotAllowedError";
+      setError(
+        denied
+          ? "The browser blocked the camera. Use the camera or lock icon in the address bar, choose Allow, then press Start camera again."
+          : "The camera or the recognition model did not start. Check that a camera is connected, then try again.",
+      );
       stop();
-      setStatus("error");
+      updateStatus("error");
     }
   }, [loop, stop]);
 
@@ -103,19 +115,20 @@ export function CameraView({ onResult }: Props) {
         <canvas ref={canvasRef} />
         {status !== "running" && (
           <div className="camera-placeholder">
-            {status === "loading" ? "Loading model and camera…" : "Camera is off"}
+            {status === "loading" ? "Starting the camera…" : status === "error" ? "Camera is blocked" : "Camera is off"}
           </div>
         )}
       </div>
       <div className="camera-controls">
         {status === "running" ? (
-          <button onClick={stop}>Stop Camera</button>
+          <button type="button" onClick={stop}><Icon name="camera" />Stop camera</button>
         ) : (
-          <button className="primary" onClick={start} disabled={status === "loading"}>
-            {status === "loading" ? "Starting…" : "Start Camera"}
+          <button className="primary camera-start" type="button" onClick={start} disabled={status === "loading"}>
+            <Icon name="camera" />
+            {status === "loading" ? "Starting…" : "Start camera"}
           </button>
         )}
-        {error && <span className="error">{error}</span>}
+        {error && <p className="error camera-help">{error}</p>}
       </div>
     </div>
   );

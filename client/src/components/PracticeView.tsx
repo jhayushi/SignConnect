@@ -77,7 +77,7 @@ export function PracticeView({ signs, activeWord }: Props) {
         </div>
       </div>
       {visible.length === 0 ? (
-        <p className="muted">No signs match that search.</p>
+        <p className="empty-state">No signs match. Try a shorter word, such as HELP.</p>
       ) : (
         <ul className="practice-grid">
           {visible.map((sign) => (

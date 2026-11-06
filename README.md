@@ -30,7 +30,7 @@ make dev
 
 The client calls relative `/api` URLs. In development, Vite proxies those to the API. `make start` does not use Vite: Express serves `client/dist` and `/api` on `PORT` (default 3001), so http://localhost:3001 is the whole app.
 
-Open the client and click **Start Camera**. Hold a supported sign for about 1 second to add it. Click **Start Mic** to speak into the same conversation. If the browser has no speech recognition, or the microphone is blocked, type the words instead. **Speak** reads the conversation aloud. A recognized sign is also spoken as it is added. **Save** stores the combined text. Saved conversations stay in the database after the server restarts.
+Open the client and click **Start camera**. Hold a supported sign for about 1 second to add it. Click **Start mic** to speak into the same conversation. If the browser has no speech recognition, or the microphone is blocked, type the words instead. **Speak** reads the conversation aloud. A recognized sign is also spoken as it is added. **Save** stores the combined text. Saved conversations stay in the database after the server restarts.
 
 The screen has three sections: **Talk** (camera, microphone, and the live conversation), **Practice** (every sign from the API), and **History** (open or delete a saved conversation).
 

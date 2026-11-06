@@ -21,6 +21,16 @@ export default function App() {
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
   const [view, setView] = useState<"talk" | "practice" | "history">("talk");
+  const [cameraStatus, setCameraStatus] = useState<"idle" | "loading" | "running" | "error">("idle");
+  const [handSeen, setHandSeen] = useState(false);
+  const [lastAdded, setLastAdded] = useState<string | null>(null);
+  const [showHint, setShowHint] = useState(() => {
+    try {
+      return localStorage.getItem("signconnect.hintSeen") !== "1";
+    } catch {
+      return true;
+    }
+  });
 
   const wordByGesture = useMemo(() => new Map(signs.map((s) => [s.gesture, s.word])), [signs]);
 
@@ -31,10 +41,16 @@ export default function App() {
   const { push } = sentence;
   const handleResult = useCallback(
     (result: RecognitionResult) => {
+      setHandSeen(result.landmarks.some((hand) => hand.length > 0));
       const word = result.label ? wordByGesture.get(result.label) ?? null : null;
       setDetection({ word, confidence: result.confidence });
       const added = push(word, result.confidence);
-      if (added) speakText(added);
+      if (added) {
+        setLastAdded(added);
+        setNotice(`Added: ${added}`);
+        window.setTimeout(() => setNotice(null), 2000);
+        speakText(added);
+      }
     },
     [wordByGesture, push],
   );
@@ -81,32 +97,60 @@ export default function App() {
 
   return (
     <div className="app">
-      <header>
-        <div>
+      <header className="topbar">
+        <div className="brand">
           <h1>SignConnect</h1>
-          <p className="tagline">Camera and microphone share one conversation.</p>
+          <p className="tagline">Sign or speak. One conversation.</p>
         </div>
-        {notice && <span className="notice">{notice}</span>}
+        <nav className="nav" aria-label="Sections">
+          <button type="button" aria-pressed={view === "talk"} onClick={() => setView("talk")}>Talk</button>
+          <button type="button" aria-pressed={view === "practice"} onClick={() => setView("practice")}>Practice</button>
+          <button type="button" aria-pressed={view === "history"} onClick={() => setView("history")}>History</button>
+        </nav>
+        {notice && <p className="notice" role="status">{notice}</p>}
       </header>
 
       {signsError && <div className="banner error">{signsError}</div>}
 
-      <nav className="views" aria-label="Sections">
-        <button type="button" aria-pressed={view === "talk"} onClick={() => setView("talk")}>Talk</button>
-        <button type="button" aria-pressed={view === "practice"} onClick={() => setView("practice")}>Practice</button>
-        <button type="button" aria-pressed={view === "history"} onClick={() => setView("history")}>History</button>
-      </nav>
-
       <main>
         <section className={view === "talk" ? "inputs" : "inputs inputs-single"} hidden={view === "history"}>
           <div className="panel input-card">
-            <h2>ASL · camera</h2>
-            <CameraView onResult={handleResult} />
-            <DetectionPanel word={detection.word} confidence={detection.confidence} progress={sentence.progress} />
+            <h2>Your camera</h2>
+            {view === "talk" && showHint && (
+              <ol className="first-run">
+                <li><strong>Allow the camera.</strong> Press Start camera and choose Allow.</li>
+                <li><strong>Hold a sign</strong> for about one second.</li>
+                <li><strong>Words appear below</strong> and are spoken aloud.</li>
+                <li className="first-run-action">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowHint(false);
+                      try {
+                        localStorage.setItem("signconnect.hintSeen", "1");
+                      } catch {
+                        /* keep the hint dismissed for this visit */
+                      }
+                    }}
+                  >
+                    Got it
+                  </button>
+                </li>
+              </ol>
+            )}
+            <CameraView onResult={handleResult} onStatus={setCameraStatus} />
+            <DetectionPanel
+              word={detection.word}
+              confidence={detection.confidence}
+              progress={sentence.progress}
+              cameraStatus={cameraStatus}
+              handSeen={handSeen}
+              lastAdded={lastAdded}
+            />
           </div>
           {view === "talk" && (
             <div className="panel input-card">
-              <h2>Speech · microphone</h2>
+              <h2>Your microphone</h2>
               <SpeechPanel onPhrase={sentence.addText} />
             </div>
           )}

@@ -1,3 +1,5 @@
+import { Icon } from "./Icon";
+
 interface Props {
   words: string[];
   onUndo: () => void;
@@ -14,17 +16,17 @@ export function SentenceBar({ words, onUndo, onClear, onCopy, onSpeak, onSave }:
       <h2>Conversation</h2>
       <div className="sentence-text" aria-live="polite">
         {empty ? (
-          <span className="muted">Hold a sign for about a second, or speak, to add a word…</span>
+          <span className="muted">Words you sign or say will show up here, in large type.</span>
         ) : (
           words.join(" ")
         )}
       </div>
       <div className="sentence-actions">
-        <button onClick={onUndo} disabled={empty}>Undo</button>
-        <button onClick={onClear} disabled={empty}>Clear</button>
-        <button onClick={onCopy} disabled={empty}>Copy</button>
-        <button onClick={onSpeak} disabled={empty}>Speak</button>
-        <button className="primary" onClick={onSave} disabled={empty}>Save</button>
+        <button type="button" onClick={onUndo} disabled={empty}><Icon name="undo" />Undo</button>
+        <button type="button" onClick={onClear} disabled={empty}><Icon name="clear" />Clear</button>
+        <button type="button" onClick={onCopy} disabled={empty}><Icon name="copy" />Copy</button>
+        <button type="button" onClick={onSpeak} disabled={empty}><Icon name="speak" />Speak</button>
+        <button type="button" className="primary" onClick={onSave} disabled={empty}><Icon name="save" />Save</button>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, type Transcript } from "../api/client";
 import { speakText } from "../speech/speak";
+import { Icon } from "./Icon";
 
 interface Props {
   transcripts: Transcript[];
@@ -44,7 +45,7 @@ export function HistoryView({ transcripts, onDelete }: Props) {
       <div className="panel">
         <h2>Saved conversations</h2>
         {transcripts.length === 0 ? (
-          <p className="muted">Nothing saved yet.</p>
+          <p className="empty-state">Nothing saved yet. On Talk, build a sentence and press Save.</p>
         ) : (
           <ul className="saved-list">
             {transcripts.map((transcript) => (
@@ -54,11 +55,11 @@ export function HistoryView({ transcripts, onDelete }: Props) {
                   <span className="muted">{new Date(transcript.createdAt).toLocaleString()}</span>
                 </button>
                 <button
-                  className="link"
+                  type="button"
                   onClick={() => onDelete(transcript.id)}
                   aria-label={`Delete ${transcript.text}`}
                 >
-                  ✕
+                  <Icon name="trash" />Delete
                 </button>
               </li>
             ))}
@@ -69,14 +70,14 @@ export function HistoryView({ transcripts, onDelete }: Props) {
         <h2>View</h2>
         {error && <p className="error">{error}</p>}
         {!viewed ? (
-          <p className="muted">Choose a saved conversation to read it.</p>
+          <p className="empty-state">Choose a saved conversation to read it here.</p>
         ) : (
           <>
             <p className="history-text">{viewed.text}</p>
             <p className="muted">{new Date(viewed.createdAt).toLocaleString()}</p>
             <div className="sentence-actions">
-              <button type="button" onClick={() => speakText(viewed.text)}>Speak</button>
-              <button type="button" onClick={() => onDelete(viewed.id)}>Delete</button>
+              <button type="button" onClick={() => speakText(viewed.text)}><Icon name="speak" />Speak</button>
+              <button type="button" onClick={() => onDelete(viewed.id)}><Icon name="trash" />Delete</button>
             </div>
           </>
         )}

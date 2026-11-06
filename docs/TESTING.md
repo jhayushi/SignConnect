@@ -26,7 +26,7 @@ The client check builds hands from 21 landmarks, so it does not need a webcam. T
 
 1. `npm install` and `npm run dev`.
 2. Open http://localhost:5173. **Practice** should list every sign returned by `GET /api/signs`, and search should narrow the list.
-3. On **Talk**, click **Start Camera**. Hold an open palm until HELLO is added. A second hand in frame should not replace a clear thumbs-up, fist, or pointing finger.
+3. On **Talk**, click **Start camera**. Hold an open palm until HELLO is added. A second hand in frame should not replace a clear thumbs-up, fist, or pointing finger.
 4. Try a landmark sign from the Practice card (for example L, or a flat O for MORE). Hold it about a second.
 5. Click **Start Mic** and say a short phrase, or type one. The words should join the same conversation. **Speak** reads that line aloud. A sign that is added is spoken as well, when the browser can synthesize speech.
 6. **Save**. Restart the API process. **History** should still show that conversation. Open it, then delete it. `GET /api/transcripts` should agree.
