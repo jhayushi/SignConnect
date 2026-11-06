@@ -146,6 +146,8 @@ input {
 .topbar-right {
   display: flex;
   justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
 }
 
 .switch {
@@ -627,6 +629,49 @@ input {
   color: var(--mint-deep);
 }
 
+.confirm {
+  margin-top: 1.1rem;
+  padding: 1rem 1.1rem;
+  background: var(--mint);
+  animation: fadein 0.25s ease-out;
+}
+
+.confirm-question {
+  margin: 0 0 0.8rem;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.confirm-question strong {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 1.35rem;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.confirm-actions .btn {
+  flex: 1;
+}
+
+.confirm-keys {
+  margin: 0.7rem 0 0;
+  font-size: 0.72rem;
+  color: var(--mint-deep);
+}
+
+kbd {
+  font-family: var(--sans);
+  font-size: 0.7rem;
+  padding: 0.05rem 0.35rem;
+  border: 1px solid rgba(19, 120, 111, 0.4);
+  border-radius: 3px;
+  background: #fff;
+}
+
 /* ---------- Speech ---------- */
 
 .speech-row {
@@ -734,6 +779,11 @@ input {
   font-family: var(--sans);
   font-size: 0.9rem;
   color: var(--muted);
+}
+
+.word-pending {
+  color: var(--muted);
+  border-bottom: 1.5px dashed var(--mint-strong);
 }
 
 .word-new {

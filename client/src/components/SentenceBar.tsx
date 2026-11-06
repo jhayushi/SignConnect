@@ -1,5 +1,6 @@
 interface Props {
   words: string[];
+  pending: string | null;
   onUndo: () => void;
   onClear: () => void;
   onCopy: () => void;
@@ -7,7 +8,7 @@ interface Props {
   onSave: () => void;
 }
 
-export function SentenceBar({ words, onUndo, onClear, onCopy, onSpeak, onSave }: Props) {
+export function SentenceBar({ words, pending, onUndo, onClear, onCopy, onSpeak, onSave }: Props) {
   const empty = words.length === 0;
   return (
     <section className="conversation">
@@ -16,7 +17,7 @@ export function SentenceBar({ words, onUndo, onClear, onCopy, onSpeak, onSave }:
         <span className="muted">{empty ? "Nothing yet" : `${words.length} word${words.length === 1 ? "" : "s"}`}</span>
       </div>
       <div className="conversation-text" aria-live="polite">
-        {empty ? (
+        {empty && !pending ? (
           <span className="placeholder">Words appear here as you sign, speak, or type.</span>
         ) : (
           words.map((word, i) => (
@@ -24,6 +25,11 @@ export function SentenceBar({ words, onUndo, onClear, onCopy, onSpeak, onSave }:
               {word.toLowerCase()}{" "}
             </span>
           ))
+        )}
+        {pending && (
+          <span className="word word-pending" title="Waiting for you to confirm">
+            {pending.toLowerCase()}?
+          </span>
         )}
       </div>
       <div className="conversation-actions">
