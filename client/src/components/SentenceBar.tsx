@@ -10,9 +10,13 @@ export function SentenceBar({ words, onUndo, onClear, onCopy, onSave }: Props) {
   const empty = words.length === 0;
   return (
     <div className="panel sentence">
-      <h2>Sentence</h2>
-      <div className="sentence-text">
-        {empty ? <span className="muted">Hold a sign for about a second to add a word…</span> : words.join(" ")}
+      <h2>Conversation</h2>
+      <div className="sentence-text" aria-live="polite">
+        {empty ? (
+          <span className="muted">Hold a sign for about a second, or speak, to add a word…</span>
+        ) : (
+          words.join(" ")
+        )}
       </div>
       <div className="sentence-actions">
         <button onClick={onUndo} disabled={empty}>Undo</button>
