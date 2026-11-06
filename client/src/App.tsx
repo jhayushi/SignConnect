@@ -5,6 +5,7 @@ import { DetectionPanel } from "./components/DetectionPanel";
 import { SavedSentences } from "./components/SavedSentences";
 import { SentenceBar } from "./components/SentenceBar";
 import { SignList } from "./components/SignList";
+import { SpeechPanel } from "./components/SpeechPanel";
 import { useSentenceBuilder } from "./hooks/useSentenceBuilder";
 import { useSigns } from "./hooks/useSigns";
 import type { RecognitionResult } from "./recognition";
@@ -74,16 +75,26 @@ export default function App() {
   return (
     <div className="app">
       <header>
-        <h1>SignConnect</h1>
+        <div>
+          <h1>SignConnect</h1>
+          <p className="tagline">Camera and microphone share one conversation.</p>
+        </div>
         {notice && <span className="notice">{notice}</span>}
       </header>
 
       {signsError && <div className="banner error">{signsError}</div>}
 
       <main>
-        <section className="top">
-          <CameraView onResult={handleResult} />
-          <DetectionPanel word={detection.word} confidence={detection.confidence} progress={sentence.progress} />
+        <section className="inputs">
+          <div className="panel input-card">
+            <h2>ASL · camera</h2>
+            <CameraView onResult={handleResult} />
+            <DetectionPanel word={detection.word} confidence={detection.confidence} progress={sentence.progress} />
+          </div>
+          <div className="panel input-card">
+            <h2>Speech · microphone</h2>
+            <SpeechPanel onPhrase={sentence.addText} />
+          </div>
         </section>
 
         <SentenceBar

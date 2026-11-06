@@ -6,7 +6,7 @@ interface Props {
 
 export function DetectionPanel({ word, confidence, progress }: Props) {
   return (
-    <div className="panel detection">
+    <div className="detection">
       <h2>Detected</h2>
       <div className="detected-word">{word ?? "—"}</div>
       <label>Confidence {word ? `${Math.round(confidence * 100)}%` : ""}</label>
