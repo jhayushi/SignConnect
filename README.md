@@ -2,7 +2,7 @@
 
 Recognizes hand signs from your webcam and builds a conversation from them, one word at a time. The other person can speak, or type, into the same conversation.
 
-**v1 scope:** a single screen, in-browser recognition (MediaPipe's Gesture Recognizer plus hand-landmark signs), speech input in the browser, and in-memory storage (no database yet).
+**v1 scope:** a single screen, in-browser recognition (MediaPipe's Gesture Recognizer plus hand-landmark signs), speech input in the browser, and a SQLite file for signs and saved conversations.
 
 ## Run it
 
@@ -14,7 +14,26 @@ npm run dev
 - Client: http://localhost:5173
 - API: http://localhost:3001
 
-Open the client and click **Start Camera**. Hold a supported sign for about 1 second to add it. Click **Start Mic** to speak into the same conversation. If the browser has no speech recognition, or the microphone is blocked, type the words instead. **Save** stores the combined text.
+Open the client and click **Start Camera**. Hold a supported sign for about 1 second to add it. Click **Start Mic** to speak into the same conversation. If the browser has no speech recognition, or the microphone is blocked, type the words instead. **Save** stores the combined text. Saved conversations stay in the database after the server restarts.
+
+## Database
+
+The API uses SQLite. On startup the server creates the file and tables if they are missing, and loads the sign vocabulary. Saved conversations are not wiped on startup.
+
+The default file is `server/data/signconnect.sqlite`. That directory is created automatically and is not committed.
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `PORT` | `3001` | API port |
+| `DATABASE_PATH` | `server/data/signconnect.sqlite` | SQLite file. An absolute path, a path relative to the `server/` package, or `:memory:` for a temporary database |
+
+```bash
+DATABASE_PATH=./signconnect.sqlite npm run dev
+```
+
+That example stores the file at `server/signconnect.sqlite`.
+
+Delete the file to reset saved conversations. The next start creates it again and reloads the sign list.
 
 ### Camera tips
 
@@ -66,7 +85,8 @@ client/   React + TypeScript (Vite)
   src/sentence/      Pure sentence-building rules (confidence, hold-to-add, no repeats)
   src/components/    Camera, speech, detection panel, conversation, lists
 server/   Express + TypeScript
-  src/repositories/  Repository interfaces + in-memory implementations
+  src/db/            SQLite file, schema, and sign seed
+  src/repositories/  Repository interfaces + SQLite implementations
   src/routes/        /api/signs, /api/transcripts
 ```
 
@@ -81,5 +101,5 @@ server/   Express + TypeScript
 
 ## Extending
 
-- **Database:** implement `SignRepository` / `TranscriptRepository` (in `server/src/repositories/types.ts`) with PostgreSQL and swap them in `server/src/index.ts`.
+- **Another database:** implement `SignRepository` / `TranscriptRepository` (in `server/src/repositories/types.ts`) and construct them in `server/src/index.ts`. SQLite is the implementation used today.
 - **Another recognizer:** implement `SignRecognizer` (in `client/src/recognition/types.ts`) and return it from `createRecognizer()`.

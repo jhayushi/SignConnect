@@ -1,5 +1,5 @@
-// Repository interfaces. Routes depend only on these, so the in-memory
-// implementations can later be swapped for PostgreSQL ones without touching routes.
+// Repository interfaces. Routes depend only on these, so the SQLite
+// implementations can later be swapped for another database without touching routes.
 
 export interface Sign {
   id: string;
