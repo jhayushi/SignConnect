@@ -1,5 +1,5 @@
-# Render Blueprint. HTTPS on the public URL is what the browser needs for the camera.
-# A persistent disk keeps the SQLite file across deploys and restarts.
+# Render Blueprint. The free web service provides HTTPS, which the camera needs.
+# There is no disk. SQLite lives under /tmp and is wiped on restart or redeploy.
 services:
   - type: web
     name: signconnect
@@ -11,8 +11,4 @@ services:
       - key: NODE_ENV
         value: production
       - key: DATABASE_PATH
-        value: /var/data/signconnect.sqlite
-    disk:
-      name: signconnect-data
-      mountPath: /var/data
-      sizeGB: 1
+        value: /tmp/signconnect.sqlite

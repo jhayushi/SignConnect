@@ -58,16 +58,16 @@ Delete the file to reset saved conversations. The next start creates it again an
 
 The camera needs a secure page. `http://localhost` is treated as secure. A public site needs HTTPS. [Render](https://render.com) provides that for a Docker web service. This repo is not deployed from here. The files to do it are `Dockerfile` and `render.yaml`.
 
-`render.yaml` describes one web service and a 1 GB disk mounted at `/var/data`. `DATABASE_PATH` is `/var/data/signconnect.sqlite`, so saved conversations stay on that disk. Render's free instance serves HTTPS, but it will not attach a disk. If the Blueprint refuses the disk, change the service to the Starter plan, which is the smallest one that keeps the disk. Without the disk, the database is wiped on every redeploy.
+`render.yaml` is a free Render web service. It does not attach a disk, so applying the Blueprint does not ask for a paid plan. `DATABASE_PATH` is `/tmp/signconnect.sqlite`. On boot the server creates that directory if needed, creates the tables, and loads the sign list. Saved conversations are wiped when the service restarts or redeploys. After the free instance has been idle, the first request can take about a minute while Render wakes it up.
 
 Steps:
 
 1. Push this repository to GitHub.
 2. In the Render dashboard, open **New** → **Blueprint**.
 3. Select the SignConnect repository. Render reads `render.yaml`.
-4. Apply the Blueprint. If it asks you to approve a paid instance for the disk, choose Starter.
+4. Apply the Blueprint. The plan is free.
 5. Wait until the deploy is live. The URL looks like `https://signconnect.onrender.com`.
-6. Open that URL, choose **Talk**, and allow the camera. **Start Camera** only works on that HTTPS URL, not on a raw HTTP address.
+6. Open that URL, choose **Talk**, and allow the camera. **Start Camera** only works on that HTTPS URL, not on a raw HTTP address. If the site has been idle, give the first load about a minute.
 
 The image builds with `npm run build`, then runs `node server/dist/index.js`. The same process serves the built client and `/api`. `PORT` comes from Render. You do not set a second URL for the API.
 
@@ -75,10 +75,10 @@ To try the container on your machine, with Docker installed:
 
 ```bash
 docker build -t signconnect .
-docker run --rm -p 3001:3001 -v signconnect-data:/var/data signconnect
+docker run --rm -p 3001:3001 signconnect
 ```
 
-Then open http://localhost:3001. The volume is the stand-in for Render's disk.
+Then open http://localhost:3001. The database file is inside the container and disappears when the container stops.
 
 ## Camera tips
 
