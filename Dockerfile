@@ -13,7 +13,7 @@ RUN npm run build
 
 ENV NODE_ENV=production
 ENV PORT=3001
-ENV DATABASE_PATH=/var/data/signconnect.sqlite
+ENV DATABASE_PATH=/tmp/signconnect.sqlite
 
 EXPOSE 3001
 
