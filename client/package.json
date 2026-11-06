@@ -7,9 +7,11 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "typecheck": "tsc",
-    "test": "tsx src/recognition/landmarkSigns.test.ts"
+    "test": "tsx src/recognition/landmarkSigns.test.ts && tsx src/sentence/sentenceBuilder.test.ts"
   },
   "dependencies": {
+    "@fontsource/bodoni-moda": "^5.3.0",
+    "@fontsource/poppins": "^5.3.0",
     "@mediapipe/tasks-vision": "^1.1.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"

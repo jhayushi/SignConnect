@@ -625,7 +625,8 @@ class LabelStabilizer {
     if (next.label === this.label) {
       this.pending = false;
       this.pendingCount = 0;
-      if (next.label) this.confidence = next.confidence;
+      // Smooth the score so one noisy frame doesn't drop it below the threshold.
+      if (next.label) this.confidence = this.confidence * 0.6 + next.confidence * 0.4;
       return this.output();
     }
     if (this.pending && this.pendingLabel === next.label) {
