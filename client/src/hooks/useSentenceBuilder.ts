@@ -6,12 +6,14 @@ export function useSentenceBuilder() {
   const [words, setWords] = useState<string[]>([]);
   const [progress, setProgress] = useState(0);
 
-  const push = useCallback((word: string | null, confidence: number) => {
+  const push = useCallback((word: string | null, confidence: number): string | null => {
     const now = performance.now();
     const next = step(stateRef.current, word, confidence, now);
+    const added = next.words.length > stateRef.current.words.length ? next.words[next.words.length - 1] : null;
     if (next.words !== stateRef.current.words) setWords(next.words);
     stateRef.current = next;
     setProgress(holdProgress(next, now));
+    return added;
   }, []);
 
   const undo = useCallback(() => {

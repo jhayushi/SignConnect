@@ -10,6 +10,15 @@ export function transcriptsRouter(transcripts: TranscriptRepository): Router {
     res.json(await transcripts.list());
   });
 
+  router.get("/:id", async (req, res) => {
+    const found = await transcripts.get(req.params.id);
+    if (!found) {
+      res.status(404).json({ error: "Transcript not found" });
+      return;
+    }
+    res.json(found);
+  });
+
   router.post("/", async (req, res) => {
     const text = typeof req.body?.text === "string" ? req.body.text.trim() : "";
     if (!text || text.length > MAX_TEXT_LENGTH) {

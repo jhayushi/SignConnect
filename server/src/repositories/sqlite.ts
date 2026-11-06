@@ -54,6 +54,11 @@ export class SqliteTranscriptRepository implements TranscriptRepository {
     return rows.map(toTranscript);
   }
 
+  async get(id: string): Promise<Transcript | null> {
+    const row = this.db.prepare("SELECT id, text, created_at FROM transcripts WHERE id = ?").get(id) as TranscriptRow | undefined;
+    return row ? toTranscript(row) : null;
+  }
+
   async create(text: string): Promise<Transcript> {
     const transcript: Transcript = {
       id: randomUUID(),

@@ -2,13 +2,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, type Transcript } from "./api/client";
 import { CameraView } from "./components/CameraView";
 import { DetectionPanel } from "./components/DetectionPanel";
-import { SavedSentences } from "./components/SavedSentences";
+import { HistoryView } from "./components/HistoryView";
+import { PracticeView } from "./components/PracticeView";
 import { SentenceBar } from "./components/SentenceBar";
-import { SignList } from "./components/SignList";
 import { SpeechPanel } from "./components/SpeechPanel";
 import { useSentenceBuilder } from "./hooks/useSentenceBuilder";
 import { useSigns } from "./hooks/useSigns";
 import type { RecognitionResult } from "./recognition";
+import { speakText } from "./speech/speak";
 
 export default function App() {
   const { signs, error: signsError } = useSigns();
@@ -19,6 +20,7 @@ export default function App() {
   });
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
+  const [view, setView] = useState<"talk" | "practice" | "history">("talk");
 
   const wordByGesture = useMemo(() => new Map(signs.map((s) => [s.gesture, s.word])), [signs]);
 
@@ -31,7 +33,8 @@ export default function App() {
     (result: RecognitionResult) => {
       const word = result.label ? wordByGesture.get(result.label) ?? null : null;
       setDetection({ word, confidence: result.confidence });
-      push(word, result.confidence);
+      const added = push(word, result.confidence);
+      if (added) speakText(added);
     },
     [wordByGesture, push],
   );
@@ -50,6 +53,10 @@ export default function App() {
     } catch {
       flash("Could not copy");
     }
+  };
+
+  const handleSpeak = () => {
+    if (!speakText(text)) flash("Speech output isn't available in this browser.");
   };
 
   const handleSave = async () => {
@@ -84,31 +91,39 @@ export default function App() {
 
       {signsError && <div className="banner error">{signsError}</div>}
 
+      <nav className="views" aria-label="Sections">
+        <button type="button" aria-pressed={view === "talk"} onClick={() => setView("talk")}>Talk</button>
+        <button type="button" aria-pressed={view === "practice"} onClick={() => setView("practice")}>Practice</button>
+        <button type="button" aria-pressed={view === "history"} onClick={() => setView("history")}>History</button>
+      </nav>
+
       <main>
-        <section className="inputs">
+        <section className={view === "talk" ? "inputs" : "inputs inputs-single"} hidden={view === "history"}>
           <div className="panel input-card">
             <h2>ASL · camera</h2>
             <CameraView onResult={handleResult} />
             <DetectionPanel word={detection.word} confidence={detection.confidence} progress={sentence.progress} />
           </div>
-          <div className="panel input-card">
-            <h2>Speech · microphone</h2>
-            <SpeechPanel onPhrase={sentence.addText} />
-          </div>
+          {view === "talk" && (
+            <div className="panel input-card">
+              <h2>Speech · microphone</h2>
+              <SpeechPanel onPhrase={sentence.addText} />
+            </div>
+          )}
         </section>
 
-        <SentenceBar
-          words={sentence.words}
-          onUndo={sentence.undo}
-          onClear={sentence.clear}
-          onCopy={handleCopy}
-          onSave={handleSave}
-        />
-
-        <section className="bottom">
-          <SignList signs={signs} activeWord={detection.word} />
-          <SavedSentences transcripts={transcripts} onDelete={handleDelete} />
-        </section>
+        {view === "talk" && (
+          <SentenceBar
+            words={sentence.words}
+            onUndo={sentence.undo}
+            onClear={sentence.clear}
+            onCopy={handleCopy}
+            onSpeak={handleSpeak}
+            onSave={handleSave}
+          />
+        )}
+        {view === "practice" && <PracticeView signs={signs} activeWord={detection.word} />}
+        {view === "history" && <HistoryView transcripts={transcripts} onDelete={handleDelete} />}
       </main>
     </div>
   );
