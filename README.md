@@ -16,6 +16,8 @@ npm run dev
 
 Open the client and click **Start Camera**. Hold a supported sign for about 1 second to add it. Click **Start Mic** to speak into the same conversation. If the browser has no speech recognition, or the microphone is blocked, type the words instead. **Save** stores the combined text. Saved conversations stay in the database after the server restarts.
 
+The screen has three sections: **Talk** (camera, microphone, and the live conversation), **Practice** (every sign from the API), and **History** (open or delete a saved conversation).
+
 ## Database
 
 The API uses SQLite. On startup the server creates the file and tables if they are missing, and loads the sign vocabulary. Saved conversations are not wiped on startup.
@@ -44,6 +46,8 @@ Delete the file to reset saved conversations. The next start creates it again an
 - WHAT and DONE need the palms clearly up or down, not facing the camera.
 
 ## Supported signs
+
+52 signs. The Practice screen is the full list from `GET /api/signs`.
 
 ### Gestures
 
@@ -76,6 +80,41 @@ These are read from the hand landmarks on the same camera frames. The shapes are
 | Name | NAME | Both H hands (index and middle together), tips touching |
 | Friend | FRIEND | Hook or touch the index fingers; other fingers in |
 | Love | LOVE | Cross your fists so the wrists are close |
+| Eat | EAT | Flat O moving up, then hold |
+| Drink | DRINK | C hand moving up, then hold |
+| Where | WHERE | Index finger wagging side to side |
+| Water | WATER | W hand bobbing, then hold |
+| Family | FAMILY | Both hands in F |
+| Bad | BAD | Open hand, palm down |
+
+### Letters and numbers
+
+Fingerspelling and numbers that can be told apart from a single frame (or a short motion for J and Z). The Practice screen lists the handshape for each one.
+
+Letters: A, B, C, D, E, F, G, H, I, J, K, L, M, N, P, Q, R, T, U, W, X, Y, Z.
+
+Numbers: 3, 4, 6, 7, 8.
+
+These shapes are already used by another sign, so they are not separate entries:
+
+| Shape | Already used as |
+|---|---|
+| Closed fist | STOP |
+| Thumb across the fist (S) | STOP |
+| Open palm | HELLO |
+| Thumbs up | YES |
+| Index pointing up | WAIT |
+| V / victory | PEACE |
+| Thumb and index circle with three fingers up | F (also the ASL number 9) |
+| Flat O | MORE (the letter O is the same family) |
+
+## Architecture
+
+The browser reads the webcam with MediaPipe, classifies extra signs from hand landmarks, and takes speech from the Web Speech API. Talk, Practice, and History all call the Express API. Signs and saved conversations live in SQLite. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Testing
+
+`npm test` runs the landmark checks, the SQLite round-trip, and the API route checks. `npm run typecheck` and `npm run build` should pass as well. Manual steps are in [docs/TESTING.md](docs/TESTING.md). How this maps to a frontend, backend, database, and the extra areas is in [docs/CAPSTONE.md](docs/CAPSTONE.md).
 
 ## Structure
 
@@ -83,7 +122,7 @@ These are read from the hand landmarks on the same camera frames. The shapes are
 client/   React + TypeScript (Vite)
   src/recognition/   SignRecognizer, MediaPipe gestures, landmark signs
   src/sentence/      Pure sentence-building rules (confidence, hold-to-add, no repeats)
-  src/components/    Camera, speech, detection panel, conversation, lists
+  src/components/    Camera, speech, practice, history, conversation
 server/   Express + TypeScript
   src/db/            SQLite file, schema, and sign seed
   src/repositories/  Repository interfaces + SQLite implementations
@@ -95,9 +134,10 @@ server/   Express + TypeScript
 | Method | Path | Description |
 |---|---|---|
 | GET | `/api/signs` | Supported signs (gesture → word) |
-| GET | `/api/transcripts` | Saved sentences, newest first |
-| POST | `/api/transcripts` | Save a sentence: `{ "text": "HELLO YES" }` |
-| DELETE | `/api/transcripts/:id` | Delete a saved sentence |
+| GET | `/api/transcripts` | Saved conversations, newest first |
+| GET | `/api/transcripts/:id` | One saved conversation |
+| POST | `/api/transcripts` | Save a conversation: `{ "text": "HELLO YES" }` |
+| DELETE | `/api/transcripts/:id` | Delete a saved conversation |
 
 ## Extending
 
