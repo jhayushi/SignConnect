@@ -1,0 +1,18 @@
+# Render Blueprint. HTTPS on the public URL is what the browser needs for the camera.
+# A persistent disk keeps the SQLite file across deploys and restarts.
+services:
+  - type: web
+    name: signconnect
+    runtime: docker
+    plan: free
+    region: oregon
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_PATH
+        value: /var/data/signconnect.sqlite
+    disk:
+      name: signconnect-data
+      mountPath: /var/data
+      sizeGB: 1

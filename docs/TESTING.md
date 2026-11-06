@@ -5,10 +5,12 @@
 From the repository root:
 
 ```bash
-npm test
-npm run typecheck
-npm run build
+make test
+make typecheck
+make build
 ```
+
+`npm test`, `npm run typecheck`, and `npm run build` are the same three commands.
 
 `npm test` runs three checks:
 

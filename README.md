@@ -7,12 +7,28 @@ Recognizes hand signs from your webcam and builds a conversation from them, one 
 ## Run it
 
 ```bash
-npm install
-npm run dev
+make install
+make dev
 ```
+
+`make help` lists every target.
+
+| Target | What it does |
+|---|---|
+| `install` | `npm install` |
+| `dev` | Vite client on port 5173 and the API on port 3001 |
+| `build` | Build the client and the API |
+| `test` | Automated checks |
+| `typecheck` | Typecheck both packages |
+| `start` | Build, then serve the site and `/api` from one process |
+| `clean` | Remove `client/dist`, `server/dist`, and the local database |
+
+`make dev` is the day-to-day loop:
 
 - Client: http://localhost:5173
 - API: http://localhost:3001
+
+The client calls relative `/api` URLs. In development, Vite proxies those to the API. `make start` does not use Vite: Express serves `client/dist` and `/api` on `PORT` (default 3001), so http://localhost:3001 is the whole app.
 
 Open the client and click **Start Camera**. Hold a supported sign for about 1 second to add it. Click **Start Mic** to speak into the same conversation. If the browser has no speech recognition, or the microphone is blocked, type the words instead. **Speak** reads the conversation aloud. A recognized sign is also spoken as it is added. **Save** stores the combined text. Saved conversations stay in the database after the server restarts.
 
@@ -26,7 +42,8 @@ The default file is `server/data/signconnect.sqlite`. That directory is created 
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `PORT` | `3001` | API port |
+| `PORT` | `3001` | Port for the API. `make start` and the Docker image serve the site on this port too |
+| `HOST` | `0.0.0.0` | Address the server binds. Leave this so a container can accept connections |
 | `DATABASE_PATH` | `server/data/signconnect.sqlite` | SQLite file. An absolute path, a path relative to the `server/` package, or `:memory:` for a temporary database |
 
 ```bash
@@ -37,7 +54,33 @@ That example stores the file at `server/signconnect.sqlite`.
 
 Delete the file to reset saved conversations. The next start creates it again and reloads the sign list.
 
-### Camera tips
+## Deploy
+
+The camera needs a secure page. `http://localhost` is treated as secure. A public site needs HTTPS. [Render](https://render.com) provides that for a Docker web service. This repo is not deployed from here. The files to do it are `Dockerfile` and `render.yaml`.
+
+`render.yaml` describes one web service and a 1 GB disk mounted at `/var/data`. `DATABASE_PATH` is `/var/data/signconnect.sqlite`, so saved conversations stay on that disk. Render's free instance serves HTTPS, but it will not attach a disk. If the Blueprint refuses the disk, change the service to the Starter plan, which is the smallest one that keeps the disk. Without the disk, the database is wiped on every redeploy.
+
+Steps:
+
+1. Push this repository to GitHub.
+2. In the Render dashboard, open **New** → **Blueprint**.
+3. Select the SignConnect repository. Render reads `render.yaml`.
+4. Apply the Blueprint. If it asks you to approve a paid instance for the disk, choose Starter.
+5. Wait until the deploy is live. The URL looks like `https://signconnect.onrender.com`.
+6. Open that URL, choose **Talk**, and allow the camera. **Start Camera** only works on that HTTPS URL, not on a raw HTTP address.
+
+The image builds with `npm run build`, then runs `node server/dist/index.js`. The same process serves the built client and `/api`. `PORT` comes from Render. You do not set a second URL for the API.
+
+To try the container on your machine, with Docker installed:
+
+```bash
+docker build -t signconnect .
+docker run --rm -p 3001:3001 -v signconnect-data:/var/data signconnect
+```
+
+Then open http://localhost:3001. The volume is the stand-in for Render's disk.
+
+## Camera tips
 
 - Light your hand from the front. A bright window behind you makes the fingers hard to see.
 - Keep the hand about a foot from the camera.
