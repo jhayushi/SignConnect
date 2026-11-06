@@ -4,6 +4,7 @@
 // THANK YOU, and SORRY are motions; once one is seen, the label stays up
 // long enough for the sentence builder's hold-to-add rule to commit it.
 
+import { Handshape, classifyOneHand } from "./handshapes";
 import type { Point } from "./types";
 
 export const LandmarkGesture = {
@@ -81,6 +82,7 @@ const MOTION_BLOCKS: Record<string, string[]> = {
   [LandmarkGesture.Please]: ["Open_Palm"],
   [LandmarkGesture.ThankYou]: ["Open_Palm"],
   [LandmarkGesture.Sorry]: ["Closed_Fist"],
+  [Handshape.Where]: ["Pointing_Up"],
 };
 
 function clamp(n: number, min: number, max: number): number {
@@ -340,6 +342,20 @@ function matchName(hands: AnalyzedHand[]): ClassifiedSign | null {
   return null;
 }
 
+function matchFamily(hands: AnalyzedHand[]): ClassifiedSign | null {
+  const shaped = hands.filter((hand) => classifyOneHand(hand)?.label === Handshape.LetterF);
+  for (let i = 0; i < shaped.length; i++) {
+    for (let j = i + 1; j < shaped.length; j++) {
+      const ref = refWidth(shaped[i], shaped[j]);
+      if (!ref) continue;
+      if (dist2(shaped[i].wrist, shaped[j].wrist) < ref * 4) {
+        return { label: Handshape.Family, confidence: 0.9 };
+      }
+    }
+  }
+  return null;
+}
+
 function matchLove(hands: AnalyzedHand[]): ClassifiedSign | null {
   const fists = hands.filter((hand) => hand.fist);
   for (let i = 0; i < fists.length; i++) {
@@ -381,24 +397,36 @@ function matchMore(hands: AnalyzedHand[]): ClassifiedSign | null {
 }
 
 export function classifyStaticSign(hands: AnalyzedHand[]): ClassifiedSign | null {
-  return (
+  const paired =
     matchHelp(hands) ??
     matchGood(hands) ??
     matchFriend(hands) ??
     matchName(hands) ??
+    matchFamily(hands) ??
     matchLove(hands) ??
     matchPalms(hands, "up", LandmarkGesture.What) ??
-    matchPalms(hands, "down", LandmarkGesture.Done) ??
-    matchMore(hands)
-  );
+    matchPalms(hands, "down", LandmarkGesture.Done);
+  if (paired) return paired;
+  if (hands.length === 1) {
+    const one = classifyOneHand(hands[0]);
+    if (one) return one;
+    if (hands[0].open && hands[0].facing === "down") return { label: Handshape.Bad, confidence: 0.86 };
+  }
+  return matchMore(hands);
 }
 
 interface Sample {
   t: number;
   x: number;
   y: number;
+  indexX: number;
+  indexY: number;
+  pinkyX: number;
+  pinkyY: number;
   palmWidth: number;
   shape: HandShape;
+  tag: string | null;
+  indexOnly: boolean;
 }
 
 interface Track {
@@ -410,10 +438,23 @@ interface Track {
 }
 
 interface Latch {
-  label: "Please" | "ThankYou" | "Sorry";
+  label: string;
   trackId: number;
   until: number;
+  holds: (sample: Sample) => boolean;
 }
+
+const MOTION_RANK = [
+  "Please",
+  "Sorry",
+  Handshape.LetterZ,
+  Handshape.LetterJ,
+  Handshape.Where,
+  Handshape.Water,
+  Handshape.Eat,
+  Handshape.Drink,
+  "ThankYou",
+];
 
 function windowSamples(track: Track, now: number, ms: number): Sample[] {
   return track.samples.filter((sample) => now - sample.t <= ms);
@@ -471,14 +512,97 @@ function isApproach(samples: Sample[]): boolean {
   return grows / (samples.length - 1) >= 0.62 && !isCircle(samples);
 }
 
-function motionOnTrack(track: Track, now: number): Latch["label"] | null {
+function mostlySamples(samples: Sample[], pred: (sample: Sample) => boolean): boolean {
+  if (samples.length === 0 || !pred(samples[samples.length - 1])) return false;
+  const hits = samples.filter(pred).length;
+  return hits / samples.length >= 0.7;
+}
+
+function isRising(samples: Sample[], pred: (sample: Sample) => boolean): boolean {
+  if (samples.length < 8 || !mostlySamples(samples, pred)) return false;
+  const duration = samples[samples.length - 1].t - samples[0].t;
+  if (duration < 380) return false;
+  const start = mean(samples.slice(0, 3).map((sample) => sample.y));
+  const end = mean(samples.slice(-3).map((sample) => sample.y));
+  if (start - end < 0.05) return false;
+  let toward = 0;
+  for (let i = 1; i < samples.length; i++) {
+    if (samples[i].y <= samples[i - 1].y + 0.004) toward += 1;
+  }
+  return toward / (samples.length - 1) >= 0.65 && !isCircle(samples);
+}
+
+function reversals(values: number[]): number {
+  let changes = 0;
+  let previous = 0;
+  for (let i = 1; i < values.length; i++) {
+    const delta = values[i] - values[i - 1];
+    if (Math.abs(delta) < 0.004) continue;
+    const sign = Math.sign(delta);
+    if (previous !== 0 && sign !== previous) changes += 1;
+    previous = sign;
+  }
+  return changes;
+}
+
+function isWag(samples: Sample[], pred: (sample: Sample) => boolean, axis: "indexX" | "indexY" | "pinkyX" | "pinkyY"): boolean {
+  if (samples.length < 8 || !mostlySamples(samples, pred)) return false;
+  const duration = samples[samples.length - 1].t - samples[0].t;
+  if (duration < 420) return false;
+  const values = samples.map((sample) => sample[axis]);
+  const span = Math.max(...values) - Math.min(...values);
+  return span >= 0.05 && reversals(values) >= 2;
+}
+
+/** Index fingertip traces the three strokes of a Z. */
+function isZPath(samples: Sample[]): boolean {
+  if (samples.length < 12 || !mostlySamples(samples, (sample) => sample.indexOnly)) return false;
+  const duration = samples[samples.length - 1].t - samples[0].t;
+  if (duration < 500) return false;
+  const third = Math.floor(samples.length / 3);
+  const parts = [samples.slice(0, third), samples.slice(third, third * 2), samples.slice(third * 2)];
+  const travel = (part: Sample[]) => ({
+    x: part[part.length - 1].indexX - part[0].indexX,
+    y: part[part.length - 1].indexY - part[0].indexY,
+  });
+  const [first, second, thirdPart] = parts.map(travel);
+  return first.x > 0.03 && Math.abs(first.y) < 0.03 && second.x < -0.02 && second.y > 0.02 && thirdPart.x > 0.03 && Math.abs(thirdPart.y) < 0.035;
+}
+
+/** Pinky draws the hook of J: down, then to the side. */
+function isJPath(samples: Sample[]): boolean {
+  if (samples.length < 10 || !mostlySamples(samples, (sample) => sample.tag === Handshape.LetterI)) return false;
+  const duration = samples[samples.length - 1].t - samples[0].t;
+  if (duration < 420) return false;
+  const mid = Math.floor(samples.length / 2);
+  const drop = samples[mid].pinkyY - samples[0].pinkyY;
+  const hook = Math.abs(samples[samples.length - 1].pinkyX - samples[mid].pinkyX);
+  const lateDrop = Math.abs(samples[samples.length - 1].pinkyY - samples[mid].pinkyY);
+  return drop > 0.04 && hook > 0.03 && lateDrop < hook;
+}
+
+function motionOnTrack(track: Track, now: number): { label: string; holds: (sample: Sample) => boolean } | null {
   const circle = windowSamples(track, now, CIRCLE_WINDOW_MS);
   if (isCircle(circle)) {
-    if (mostly(circle, "open")) return "Please";
-    if (mostly(circle, "fist")) return "Sorry";
+    if (mostly(circle, "open")) return { label: "Please", holds: (sample) => sample.shape === "open" };
+    if (mostly(circle, "fist")) return { label: "Sorry", holds: (sample) => sample.shape === "fist" };
   }
-  const approach = windowSamples(track, now, APPROACH_WINDOW_MS);
-  if (isApproach(approach)) return "ThankYou";
+  const recent = windowSamples(track, now, APPROACH_WINDOW_MS);
+  if (isZPath(recent)) return { label: Handshape.LetterZ, holds: (sample) => sample.indexOnly };
+  if (isJPath(recent)) return { label: Handshape.LetterJ, holds: (sample) => sample.tag === Handshape.LetterI };
+  if (isWag(recent, (sample) => sample.indexOnly, "indexX")) {
+    return { label: Handshape.Where, holds: (sample) => sample.indexOnly };
+  }
+  if (isWag(recent, (sample) => sample.tag === Handshape.LetterW, "indexY")) {
+    return { label: Handshape.Water, holds: (sample) => sample.tag === Handshape.LetterW };
+  }
+  if (isRising(recent, (sample) => sample.tag === "More")) {
+    return { label: Handshape.Eat, holds: (sample) => sample.tag === "More" };
+  }
+  if (isRising(recent, (sample) => sample.tag === Handshape.LetterC)) {
+    return { label: Handshape.Drink, holds: (sample) => sample.tag === Handshape.LetterC };
+  }
+  if (isApproach(recent)) return { label: "ThankYou", holds: (sample) => sample.shape === "open" };
   return null;
 }
 
@@ -567,9 +691,10 @@ export class GestureTracker {
     this.tracks = this.tracks.filter((track) => now - track.lastT < 350);
 
     const staticSign = classifyStaticSign(hands);
-    if (!staticSign) this.noteMotion(now);
-
-    const raw = staticSign ?? this.latched(now) ?? this.fallback(fallback, now);
+    this.noteMotion(now);
+    const motion = this.latched(now);
+    // A moving C, W, or flat-O is DRINK, WATER, or EAT rather than the still handshape.
+    const raw = motion ?? staticSign ?? this.fallback(fallback, now);
     return this.stabilizer.push(raw);
   }
 
@@ -595,12 +720,19 @@ export class GestureTracker {
       };
       if (!best) this.tracks.push(track);
       used.add(track.id);
+      const one = classifyOneHand(hand);
       track.samples.push({
         t: now,
         x: hand.wrist.x,
         y: hand.wrist.y,
+        indexX: hand.image[8].x,
+        indexY: hand.image[8].y,
+        pinkyX: hand.image[20].x,
+        pinkyY: hand.image[20].y,
         palmWidth: hand.palmWidth,
         shape: hand.shape,
+        tag: one?.label ?? (hand.flatO ? "More" : null),
+        indexOnly: hand.indexOnly,
       });
       track.lastX = hand.wrist.x;
       track.lastY = hand.wrist.y;
@@ -611,16 +743,16 @@ export class GestureTracker {
   }
 
   private noteMotion(now: number): void {
-    let found: { label: Latch["label"]; trackId: number } | null = null;
+    let found: { label: string; trackId: number; holds: (sample: Sample) => boolean } | null = null;
     for (const track of this.tracks) {
-      const label = motionOnTrack(track, now);
-      if (!label) continue;
-      // A circle is deliberate. Prefer it over a hand that is also getting larger.
-      if (!found || label !== "ThankYou") found = { label, trackId: track.id };
-      if (label !== "ThankYou") break;
+      const motion = motionOnTrack(track, now);
+      if (!motion) continue;
+      if (!found || MOTION_RANK.indexOf(motion.label) < MOTION_RANK.indexOf(found.label)) {
+        found = { label: motion.label, trackId: track.id, holds: motion.holds };
+      }
     }
     if (!found) return;
-    this.latch = { label: found.label, trackId: found.trackId, until: now + LATCH_MS };
+    this.latch = { label: found.label, trackId: found.trackId, until: now + LATCH_MS, holds: found.holds };
     this.cooldownUntil = 0;
     this.suppress.clear();
   }
@@ -634,14 +766,13 @@ export class GestureTracker {
       this.latch = null;
       return null;
     }
-    const required = latch.label === "Sorry" ? "fist" : "open";
-    return this.trackShape(latch.trackId) === required ? { label: latch.label, confidence: 0.9 } : null;
+    const latest = this.latestSample(latch.trackId);
+    return latest && latch.holds(latest) ? { label: latch.label, confidence: 0.9 } : null;
   }
 
-  private trackShape(trackId: number): HandShape | "missing" {
+  private latestSample(trackId: number): Sample | null {
     const track = this.tracks.find((item) => item.id === trackId);
-    const latest = track?.samples[track.samples.length - 1];
-    return latest ? latest.shape : "missing";
+    return track?.samples[track.samples.length - 1] ?? null;
   }
 
   private fallback(
