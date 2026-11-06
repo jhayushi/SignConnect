@@ -14,7 +14,7 @@ npm run dev
 - Client: http://localhost:5173
 - API: http://localhost:3001
 
-Open the client and click **Start Camera**. Hold a supported sign for about 1 second to add it. Click **Start Mic** to speak into the same conversation. If the browser has no speech recognition, or the microphone is blocked, type the words instead. **Save** stores the combined text. Saved conversations stay in the database after the server restarts.
+Open the client and click **Start Camera**. Hold a supported sign for about 0.6 seconds to add it. Click **Start Mic** to speak into the same conversation. If the browser has no speech recognition, or the microphone is blocked, type the words instead. **Save** stores the combined text. Saved conversations stay in the database after the server restarts.
 
 The screen has three sections: **Talk** (camera, microphone, and the live conversation), **Practice** (every sign from the API), and **History** (open or delete a saved conversation).
 
@@ -41,7 +41,7 @@ Delete the file to reset saved conversations. The next start creates it again an
 
 - Light your hand from the front. A bright window behind you makes the fingers hard to see.
 - Keep the hand about a foot from the camera.
-- Still signs: hold for about a second. PLEASE, THANK YOU, and SORRY are motions — do the motion, then keep the hand up briefly so the word can be added.
+- Still signs: hold for about 0.6 seconds. PLEASE, THANK YOU, and SORRY are motions — do the motion, then keep the hand up briefly so the word can be added.
 - Two-hand signs need both hands in the frame.
 - WHAT and DONE need the palms clearly up or down, not facing the camera.
 
@@ -138,6 +138,13 @@ server/   Express + TypeScript
 | GET | `/api/transcripts/:id` | One saved conversation |
 | POST | `/api/transcripts` | Save a conversation: `{ "text": "HELLO YES" }` |
 | DELETE | `/api/transcripts/:id` | Delete a saved conversation |
+| GET | `/api/samples` | `{ "count": N }` for stored landmark samples. Optional `?label=` |
+| POST | `/api/samples` | Save a batch: `{ "samples": [{ "label": "LetterL", "landmarks": [21 points] }] }` |
+| GET | `/api/samples/export.csv` | Download samples as CSV |
+| GET | `/api/samples/export.json` | Download samples as JSON |
+| DELETE | `/api/samples?label=` | Delete stored samples, optionally one label |
+
+Recording is off until someone starts it on the Practice screen. `npm run evaluate` scores the synthetic fixture file and rewrites `docs/RESULTS.md`.
 
 ## Extending
 

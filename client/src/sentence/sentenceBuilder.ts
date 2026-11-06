@@ -13,7 +13,7 @@ export interface BuilderConfig {
 
 export const DEFAULT_CONFIG: BuilderConfig = {
   minConfidence: 0.7,
-  holdMs: 1000,
+  holdMs: 600,
   releaseMs: 400,
 };
 

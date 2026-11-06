@@ -655,7 +655,7 @@ class LabelStabilizer {
 
 /**
  * Turns a stream of hands into one label. Static shapes win over motion.
- * A recognized motion is held briefly so a one-second hold can complete,
+ * A recognized motion is held briefly so the sentence builder can commit it,
  * then the similar built-in gesture (open palm, fist) is suppressed so it
  * is not added on the next frame.
  */

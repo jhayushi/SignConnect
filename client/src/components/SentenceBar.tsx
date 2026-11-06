@@ -13,7 +13,7 @@ export function SentenceBar({ words, onUndo, onClear, onCopy, onSave }: Props) {
       <h2>Conversation</h2>
       <div className="sentence-text" aria-live="polite">
         {empty ? (
-          <span className="muted">Hold a sign for about a second, or speak, to add a word…</span>
+          <span className="muted">Hold a sign for about 0.6 seconds, or speak, to add a word…</span>
         ) : (
           words.join(" ")
         )}
