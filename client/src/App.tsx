@@ -22,7 +22,8 @@ const NAV: { id: View; label: string }[] = [
 
 export default function App() {
   const { signs, error: signsError } = useSigns();
-  const sentence = useSentenceBuilder();
+  const [confirmSigns, setConfirmSigns] = useState(true);
+  const sentence = useSentenceBuilder(confirmSigns);
   const [detection, setDetection] = useState<{ word: string | null; confidence: number }>({
     word: null,
     confidence: 0,
@@ -54,6 +55,32 @@ export default function App() {
     },
     [wordByGesture, push, voiceOn],
   );
+
+  const { confirm, dismiss, pending } = sentence;
+  const handleConfirm = useCallback(() => {
+    const added = confirm();
+    if (added) {
+      setLastAdded(added);
+      if (voiceOn) speakText(added);
+    }
+  }, [confirm, voiceOn]);
+
+  // Enter adds the suggested sign, Escape skips it (not while typing in a field).
+  useEffect(() => {
+    if (!pending) return;
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return;
+      if (event.key === "Enter") {
+        event.preventDefault();
+        handleConfirm();
+      } else if (event.key === "Escape") {
+        dismiss();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [pending, handleConfirm, dismiss]);
 
   const flash = (message: string) => {
     setNotice(message);
@@ -120,6 +147,11 @@ export default function App() {
           <span>SignConnect</span>
         </button>
         <div className="topbar-right">
+          <label className="switch" title="Ask before adding each recognized sign">
+            <input type="checkbox" checked={confirmSigns} onChange={(e) => setConfirmSigns(e.target.checked)} />
+            <span className="switch-track" aria-hidden="true" />
+            Confirm each sign
+          </label>
           <label className="switch">
             <input type="checkbox" checked={voiceOn} onChange={(e) => setVoiceOn(e.target.checked)} />
             <span className="switch-track" aria-hidden="true" />
@@ -178,6 +210,9 @@ export default function App() {
               progress={sentence.progress}
               tip={tip}
               lastAdded={lastAdded}
+              pending={sentence.pending}
+              onConfirm={handleConfirm}
+              onDismiss={sentence.dismiss}
             />
             {view === "talk" && <SpeechPanel onPhrase={sentence.addText} />}
           </aside>
@@ -186,6 +221,7 @@ export default function App() {
         {view === "talk" && (
           <SentenceBar
             words={sentence.words}
+            pending={sentence.pending}
             onUndo={sentence.undo}
             onClear={sentence.clear}
             onCopy={handleCopy}
