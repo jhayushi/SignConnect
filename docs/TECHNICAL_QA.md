@@ -22,7 +22,7 @@ S is a fist, which is already STOP. V is already PEACE. An open hand is HELLO, a
 
 ## What makes this real time, rather than a picture upload?
 
-The loop is `requestAnimationFrame` in `CameraView`. Each new frame from the live `<video>` element is classified immediately. The sentence builder in `sentenceBuilder.ts` is what keeps that stream from adding a word on every frame: the same label has to stay at or above 0.7 confidence for about a second (`holdMs` is 1000). The hold meter in `DetectionPanel` is that timer. After a word is added it is locked until the hand changes, so one held sign does not repeat.
+The loop is `requestAnimationFrame` in `CameraView`. Each new frame from the live `<video>` element is classified immediately. The sentence builder in `sentenceBuilder.ts` is what keeps that stream from adding a word on every frame: the same label has to stay at or above 0.65 confidence for about a second (`holdMs` is 900). A dropout shorter than `graceMs` (250 ms) is ignored, so one noisy frame does not restart the hold. The hold meter in `DetectionPanel` is that timer. After a word is added it is locked until the hand changes, so one held sign does not repeat.
 
 ## How do speech-to-text and text-to-speech share the conversation with the signs?
 
