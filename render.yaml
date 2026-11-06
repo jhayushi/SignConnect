@@ -1,0 +1,14 @@
+# Render Blueprint. The free web service provides HTTPS, which the camera needs.
+# There is no disk. SQLite lives under /tmp and is wiped on restart or redeploy.
+services:
+  - type: web
+    name: signconnect
+    runtime: docker
+    plan: free
+    region: oregon
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_PATH
+        value: /tmp/signconnect.sqlite

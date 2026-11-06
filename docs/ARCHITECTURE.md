@@ -51,8 +51,10 @@ Routes depend on `SignRepository` and `TranscriptRepository` (`server/src/reposi
 
 The default file is `server/data/signconnect.sqlite`. `DATABASE_PATH` overrides it. `:memory:` is a database that disappears when the process exits.
 
+`make dev` runs Vite and the API as two processes. Vite proxies `/api` to the API. `make start` builds `client/dist` and the API serves that folder and `/api` on `PORT`, which is how the Docker image and the Render service run.
+
 Speech recognition and speech synthesis stay in the browser. Only the finished text is saved.
 
 ## What is intentionally not here
 
-There is no account system and no separate deployment config. Another database can implement the same repository interfaces and be constructed in `index.ts`.
+There is no account system. Another database can implement the same repository interfaces and be constructed in `index.ts`. Production hosting is the Dockerfile and `render.yaml` described in the README.
