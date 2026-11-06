@@ -21,6 +21,10 @@ export class MediaPipeRecognizer implements SignRecognizer {
         baseOptions: { modelAssetPath: MODEL_URL, delegate },
         runningMode: "VIDEO",
         numHands: 2,
+        // Slightly stricter than the 0.5 defaults: fewer phantom hands and jittery landmarks.
+        minHandDetectionConfidence: 0.6,
+        minHandPresenceConfidence: 0.6,
+        minTrackingConfidence: 0.6,
       });
     try {
       this.recognizer = await create("GPU");

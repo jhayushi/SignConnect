@@ -10,22 +10,43 @@ interface Props {
 export function SentenceBar({ words, onUndo, onClear, onCopy, onSpeak, onSave }: Props) {
   const empty = words.length === 0;
   return (
-    <div className="panel sentence">
-      <h2>Conversation</h2>
-      <div className="sentence-text" aria-live="polite">
+    <section className="conversation">
+      <div className="conversation-head">
+        <h2 className="serif-title">Conversation</h2>
+        <span className="muted">{empty ? "Nothing yet" : `${words.length} word${words.length === 1 ? "" : "s"}`}</span>
+      </div>
+      <div className="conversation-text" aria-live="polite">
         {empty ? (
-          <span className="muted">Hold a sign for about a second, or speak, to add a word…</span>
+          <span className="placeholder">Words appear here as you sign, speak, or type.</span>
         ) : (
-          words.join(" ")
+          words.map((word, i) => (
+            <span key={i} className={i === words.length - 1 ? "word word-new" : "word"}>
+              {word.toLowerCase()}{" "}
+            </span>
+          ))
         )}
       </div>
-      <div className="sentence-actions">
-        <button onClick={onUndo} disabled={empty}>Undo</button>
-        <button onClick={onClear} disabled={empty}>Clear</button>
-        <button onClick={onCopy} disabled={empty}>Copy</button>
-        <button onClick={onSpeak} disabled={empty}>Speak</button>
-        <button className="primary" onClick={onSave} disabled={empty}>Save</button>
+      <div className="conversation-actions">
+        <div className="group">
+          <button className="btn btn-ghost" onClick={onUndo} disabled={empty} title="Remove the last word">
+            ↶ Undo
+          </button>
+          <button className="btn btn-ghost" onClick={onClear} disabled={empty}>
+            Clear
+          </button>
+          <button className="btn btn-ghost" onClick={onCopy} disabled={empty}>
+            Copy
+          </button>
+        </div>
+        <div className="group">
+          <button className="btn btn-outline" onClick={onSpeak} disabled={empty}>
+            🔊 Read aloud
+          </button>
+          <button className="btn btn-dark" onClick={onSave} disabled={empty}>
+            Save conversation
+          </button>
+        </div>
       </div>
-    </div>
+    </section>
   );
 }

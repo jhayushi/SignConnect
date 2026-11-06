@@ -24,7 +24,7 @@ MediaPipe's seven gestures are not the whole vocabulary. `client/src/recognition
 
 ### 3. Real-time functionality from the live webcam loop
 
-`CameraView` does not take a snapshot. `requestAnimationFrame` calls the recognizer on every new video frame while the camera is running. A label is not added on the first frame. `client/src/sentence/sentenceBuilder.ts` waits until the same word stays above 0.7 confidence for about a second (`holdMs` 1000), and it will not add that word again until the hand leaves. The detection panel shows the live word, the confidence meter, and the hold progress from that same loop.
+`CameraView` does not take a snapshot. `requestAnimationFrame` calls the recognizer on every new video frame while the camera is running. A label is not added on the first frame. `client/src/sentence/sentenceBuilder.ts` waits until the same word stays at or above 0.65 confidence for about a second (`holdMs` 900). A one- or two-frame flicker does not restart that timer (`graceMs` 250), and the word is not added again until the hand leaves. The detection panel shows the live word, how sure the recognizer is, the hold progress, and a framing tip (move closer, keep your hand in the frame) from that same loop.
 
 ### 4. Natural language: speech-to-text and text-to-speech
 
