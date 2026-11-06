@@ -443,3 +443,24 @@ button.link {
     grid-template-columns: 1fr;
   }
 }
+
+.recorder {
+  margin-top: 1rem;
+}
+
+.recorder-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.recorder select {
+  font: inherit;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+}

@@ -28,3 +28,19 @@ export interface TranscriptRepository {
   create(text: string): Promise<Transcript>;
   delete(id: string): Promise<boolean>;
 }
+
+/** One labeled hand after the client has normalized it. 21 points. */
+export interface LandmarkSample {
+  id: string;
+  label: string;
+  createdAt: string;
+  landmarks: { x: number; y: number; z: number }[];
+}
+
+export interface SampleRepository {
+  list(label?: string): Promise<LandmarkSample[]>;
+  count(label?: string): Promise<number>;
+  createMany(rows: { label: string; landmarks: LandmarkSample["landmarks"] }[]): Promise<number>;
+  delete(id: string): Promise<boolean>;
+  clear(label?: string): Promise<number>;
+}

@@ -44,7 +44,7 @@ export function PracticeView({ signs, activeWord }: Props) {
     <div className="panel practice">
       <h2>Practice</h2>
       <p className="muted sign-hint">
-        {signs.length} signs from the server. Hold one for about a second. The card lights up when the camera sees it.
+        {signs.length} signs from the server. Hold one for about 0.6 seconds. The card lights up when the camera sees it.
       </p>
       <div className="practice-now" aria-live="polite">
         {active ? (

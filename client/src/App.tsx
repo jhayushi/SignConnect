@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, type Transcript } from "./api/client";
 import { CameraView } from "./components/CameraView";
 import { DetectionPanel } from "./components/DetectionPanel";
 import { HistoryView } from "./components/HistoryView";
 import { PracticeView } from "./components/PracticeView";
+import { SampleRecorder } from "./components/SampleRecorder";
 import { SentenceBar } from "./components/SentenceBar";
 import { SpeechPanel } from "./components/SpeechPanel";
+import type { Point } from "./recognition";
 import { useSentenceBuilder } from "./hooks/useSentenceBuilder";
 import { useSigns } from "./hooks/useSigns";
 import type { RecognitionResult } from "./recognition";
@@ -22,6 +24,7 @@ export default function App() {
   const [view, setView] = useState<"talk" | "practice" | "history">("talk");
 
   const wordByGesture = useMemo(() => new Map(signs.map((s) => [s.gesture, s.word])), [signs]);
+  const landmarksRef = useRef<Point[] | null>(null);
 
   useEffect(() => {
     api.listTranscripts().then(setTranscripts).catch(() => {});
@@ -30,6 +33,7 @@ export default function App() {
   const { push } = sentence;
   const handleResult = useCallback(
     (result: RecognitionResult) => {
+      landmarksRef.current = result.landmarks[0] ?? null;
       const word = result.label ? wordByGesture.get(result.label) ?? null : null;
       setDetection({ word, confidence: result.confidence });
       push(word, result.confidence);
@@ -115,7 +119,12 @@ export default function App() {
             onSave={handleSave}
           />
         )}
-        {view === "practice" && <PracticeView signs={signs} activeWord={detection.word} />}
+        {view === "practice" && (
+          <>
+            <PracticeView signs={signs} activeWord={detection.word} />
+            <SampleRecorder signs={signs} landmarksRef={landmarksRef} />
+          </>
+        )}
         {view === "history" && <HistoryView transcripts={transcripts} onDelete={handleDelete} />}
       </main>
     </div>

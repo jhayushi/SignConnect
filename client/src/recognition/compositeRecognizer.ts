@@ -1,6 +1,7 @@
 import { MediaPipeRecognizer } from "./mediaPipeRecognizer";
 import { GestureTracker, type HandFrame } from "./landmarkSigns";
-import type { RecognitionResult, SignRecognizer } from "./types";
+import { OneEuroLandmarkFilter } from "./signal";
+import type { Point, RecognitionResult, SignRecognizer } from "./types";
 
 /**
  * MediaPipe's canned gestures, plus landmark signs for a few more words.
@@ -9,6 +10,8 @@ import type { RecognitionResult, SignRecognizer } from "./types";
 export class CompositeRecognizer implements SignRecognizer {
   private readonly gestures = new MediaPipeRecognizer();
   private readonly tracker = new GestureTracker();
+  private readonly smoothers: OneEuroLandmarkFilter[] = [];
+  private lastTimestamp = 0;
 
   init(): Promise<void> {
     return this.gestures.init();
@@ -16,11 +19,14 @@ export class CompositeRecognizer implements SignRecognizer {
 
   recognize(video: HTMLVideoElement, timestampMs: number): RecognitionResult {
     const raw = this.gestures.recognize(video, timestampMs);
+    const dt = this.lastTimestamp ? (timestampMs - this.lastTimestamp) / 1000 : 0;
+    this.lastTimestamp = timestampMs;
     const hands: HandFrame[] = raw.landmarks.map((landmarks, index) => ({
-      landmarks,
+      landmarks: this.smooth(index, landmarks, dt),
       worldLandmarks: raw.worldLandmarks?.[index],
       handedness: raw.handedness?.[index] ?? "Unknown",
     }));
+    this.smoothers.length = hands.length;
     const decision = this.tracker.decide(hands, { label: raw.label, confidence: raw.confidence }, timestampMs);
     return { ...raw, label: decision.label, confidence: decision.confidence };
   }
@@ -28,5 +34,12 @@ export class CompositeRecognizer implements SignRecognizer {
   close(): void {
     this.gestures.close();
     this.tracker.reset();
+    this.smoothers.forEach((filter) => filter.reset());
+    this.lastTimestamp = 0;
+  }
+
+  private smooth(index: number, landmarks: Point[], dtSeconds: number): Point[] {
+    const filter = (this.smoothers[index] ??= new OneEuroLandmarkFilter());
+    return filter.apply(landmarks, dtSeconds);
   }
 }

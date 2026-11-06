@@ -49,6 +49,15 @@ export function openDatabase(filename: string = databasePath()): Database.Databa
       text TEXT NOT NULL,
       created_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS landmark_samples (
+      id TEXT PRIMARY KEY,
+      label TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      landmarks TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS landmark_samples_label ON landmark_samples (label);
   `);
   seedSigns(db);
   return db;

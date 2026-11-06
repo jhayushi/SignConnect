@@ -3,6 +3,7 @@ import type { AddressInfo } from "node:net";
 import { createApp } from "../app.js";
 import { SEED_SIGNS } from "../data/signs.js";
 import { openDatabase } from "../db/sqlite.js";
+import { SqliteSampleRepository } from "../repositories/samples.js";
 import { SqliteSignRepository, SqliteTranscriptRepository } from "../repositories/sqlite.js";
 
 function check(condition: unknown, message: string): asserts condition {
@@ -13,6 +14,7 @@ const db = openDatabase(":memory:");
 const app = createApp({
   signs: new SqliteSignRepository(db),
   transcripts: new SqliteTranscriptRepository(db),
+  samples: new SqliteSampleRepository(db),
 });
 const server = createServer(app);
 await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", () => resolve()));
@@ -67,6 +69,28 @@ check(missingDelete.status === 404, "deleting a missing transcript should be 404
 
 const after = await call("/api/transcripts");
 check(Array.isArray(after.body) && (after.body as unknown[]).length === 0, "transcript list should be empty");
+
+const landmarks = Array.from({ length: 21 }, (_, index) => ({ x: index / 20, y: 0.2, z: 0 }));
+const posted = await call("/api/samples", {
+  method: "POST",
+  body: JSON.stringify({ samples: [{ label: "LetterL", landmarks }] }),
+});
+check(posted.status === 201 && (posted.body as { saved: number }).saved === 1, "sample create failed");
+const counted = await call("/api/samples?label=LetterL");
+check(counted.status === 200 && (counted.body as { count: number }).count === 1, "sample count failed");
+const exported = await fetch(`http://127.0.0.1:${port}/api/samples/export.csv?label=LetterL`);
+const csv = await exported.text();
+check(exported.status === 200 && csv.includes("LetterL") && csv.includes("x0"), "csv export failed");
+const jsonExport = await call("/api/samples/export.json?label=LetterL");
+const jsonRows = jsonExport.body as { label: string; landmarks: unknown[] }[];
+check(jsonExport.status === 200 && jsonRows.length === 1 && jsonRows[0].landmarks.length === 21, "json export failed");
+const rejected = await call("/api/samples", {
+  method: "POST",
+  body: JSON.stringify({ samples: [{ label: "LetterL", landmarks: landmarks.slice(0, 3) }] }),
+});
+check(rejected.status === 400, "short landmark list should be rejected");
+const cleared = await call("/api/samples?label=LetterL", { method: "DELETE" });
+check(cleared.status === 200 && (cleared.body as { deleted: number }).deleted === 1, "sample clear failed");
 
 server.close();
 db.close();
