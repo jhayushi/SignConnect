@@ -1,7 +1,0 @@
-node_modules
-client/dist
-server/dist
-server/data
-.git
-*.log
-.DS_Store
